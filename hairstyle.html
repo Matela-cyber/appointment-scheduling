@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hairstyle Uploader</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      .time-inputs {
+        margin: 10px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .time-inputs input {
+        width: 120px;
+      }
+      #hairstyleForm {
+        display: flex;
+        flex-direction: column;
+        max-width: 400px;
+        gap: 10px;
+        margin-bottom: 30px;
+      }
+      #styleName {
+        padding: 8px;
+      }
+      button {
+        padding: 10px;
+        background-color: #4c5baf;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      button.delete {
+        background-color: #f44336;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+      tr:nth-child(even) {
+        background-color: #f9f9f9;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        position: relative;
+      }
+      .schedules-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background-color: #4c5baf;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 4px;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .schedules-btn:hover {
+        background-color: #3a499f;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <a href="index.html" class="schedules-btn">
+        <i class="fas fa-clock"></i> Schedules
+      </a>
+
+      <h1>Hairstyle Manager</h1>
+
+      <h2>Add New Hairstyle</h2>
+      <form id="hairstyleForm">
+        <input
+          type="text"
+          id="styleName"
+          placeholder="Hairstyle Name"
+          required
+        />
+
+        <div class="time-inputs">
+          <input
+            type="number"
+            id="minTime"
+            placeholder="Min time (min)"
+            min="0"
+            required
+          />
+
+          <input
+            type="number"
+            id="avgTime"
+            placeholder="Avg time (min)"
+            min="0"
+            required
+          />
+          <input
+            type="number"
+            id="maxTime"
+            placeholder="Max time (min)"
+            min="0"
+            required
+          />
+        </div>
+
+        <button type="submit">Add Hairstyle</button>
+      </form>
+
+      <h2>Existing Hairstyles</h2>
+      <table id="hairstylesTable">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Min Time (min)</th>
+            <th>Avg Time (min)</th>
+            <th>Max Time (min)</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="hairstylesList">
+          <!-- Hairstyles will be loaded here -->
+        </tbody>
+      </table>
+    </div>
+
+    <script type="module">
+      // Import Firebase SDK
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+      import {
+        getDatabase,
+        ref,
+        push,
+        onValue,
+        remove,
+      } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+
+      // Firebase config
+      const firebaseConfig = {
+        apiKey: "AIzaSyAuiW80MzusIQ9xDxYtLfzcZutDfnCbsIs",
+        authDomain: "saloon-fd2ef.firebaseapp.com",
+        databaseURL: "https://saloon-fd2ef-default-rtdb.firebaseio.com",
+        projectId: "saloon-fd2ef",
+        storageBucket: "saloon-fd2ef.appspot.com",
+        messagingSenderId: "972573728552",
+        appId: "1:972573728552:web:6874b8b8bf159cf8337a1d",
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const database = getDatabase(app);
+      const hairstylesRef = ref(database, "hair-styles");
+
+      // Load hairstyles when page loads
+      window.addEventListener("DOMContentLoaded", () => {
+        loadHairstyles();
+      });
+
+      // Function to load hairstyles from database
+      function loadHairstyles() {
+        onValue(hairstylesRef, (snapshot) => {
+          const hairstylesList = document.getElementById("hairstylesList");
+          hairstylesList.innerHTML = ""; // Clear current list
+
+          const data = snapshot.val();
+          if (data) {
+            Object.keys(data).forEach((key) => {
+              const hairstyle = data[key];
+              const row = document.createElement("tr");
+
+              row.innerHTML = `
+                <td>${hairstyle.name}</td>
+                <td>${hairstyle.time.min}</td>
+                <td>${hairstyle.time.average}</td>
+                <td>${hairstyle.time.max}</td>
+                <td><button class="delete" data-id="${key}">Delete</button></td>
+              `;
+
+              hairstylesList.appendChild(row);
+            });
+
+            // Add event listeners to delete buttons
+            document.querySelectorAll(".delete").forEach((button) => {
+              button.addEventListener("click", (e) => {
+                const hairstyleId = e.target.getAttribute("data-id");
+                deleteHairstyle(hairstyleId);
+              });
+            });
+          } else {
+            hairstylesList.innerHTML =
+              '<tr><td colspan="5">No hairstyles found</td></tr>';
+          }
+        });
+      }
+
+      // Function to delete a hairstyle
+      function deleteHairstyle(id) {
+        if (confirm("Are you sure you want to delete this hairstyle?")) {
+          const hairstyleRef = ref(database, `hair-styles/${id}`);
+          remove(hairstyleRef)
+            .then(() => {
+              alert("Hairstyle deleted successfully!");
+            })
+            .catch((error) => {
+              alert("Error deleting hairstyle: " + error.message);
+            });
+        }
+      }
+
+      // Form submit handler
+      document
+        .getElementById("hairstyleForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const styleName = document.getElementById("styleName").value.trim();
+          const minTime = document.getElementById("minTime").value;
+          const avgTime = document.getElementById("avgTime").value;
+          const maxTime = document.getElementById("maxTime").value;
+
+          if (styleName && minTime && avgTime && maxTime) {
+            push(hairstylesRef, {
+              name: styleName,
+              time: {
+                min: minTime,
+                average: avgTime,
+                max: maxTime,
+              },
+            });
+
+            alert("Hairstyle added successfully!");
+            document.getElementById("hairstyleForm").reset();
+          } else {
+            alert("Please fill in all required fields!");
+          }
+        });
+    </script>
+  </body>
+</html>

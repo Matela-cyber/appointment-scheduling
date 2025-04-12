@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Salon Appointment Scheduler</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+        position: relative;
+      }
+      h1,
+      h2 {
+        color: #4c5baf;
+      }
+      .container {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+      }
+      .form-section,
+      .schedule-section {
+        flex: 1;
+      }
+      form {
+        background: #f9f9f9;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+      input,
+      select {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+      button {
+        background-color: #4c5baf;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      button:hover {
+        background-color: #3a499f;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+      tr:nth-child(even) {
+        background-color: #f9f9f9;
+      }
+      .time-slots {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 15px;
+      }
+      .time-slot {
+        background: #e9f5ff;
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        border: 1px solid #ddd;
+      }
+      .time-slot.booked {
+        background: #ffebee;
+        color: #999;
+        text-decoration: line-through;
+        cursor: not-allowed;
+      }
+      .time-slot.selected {
+        background: #4c5baf;
+        color: white;
+        border-color: #4c5baf;
+      }
+      #estimatedTime {
+        font-weight: bold;
+        color: #4c5baf;
+      }
+      .action-buttons {
+        display: flex;
+        gap: 5px;
+      }
+      .delete-btn {
+        background-color: #f44336;
+      }
+      .delete-btn:hover {
+        background-color: #d32f2f;
+      }
+      .date-navigation {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 15px;
+      }
+      .date-navigation button {
+        padding: 5px 10px;
+        font-size: 14px;
+      }
+      .date-display {
+        font-size: 18px;
+        font-weight: bold;
+      }
+      .add-hair-style-btn {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        background-color: #4c5baf;
+      }
+      .add-hair-style-btn:hover {
+        background-color: #778bff;
+      }
+      .add-new-style-option {
+        color: #4caf50;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Salon Appointment Scheduler</h1>
+    <button class="add-hair-style-btn" id="addHairStyleBtn">
+      Add Hair Style
+    </button>
+
+    <div class="container">
+      <div class="form-section">
+        <h2>Schedule New Appointment</h2>
+        <form id="appointmentForm">
+          <div class="form-group">
+            <label for="clientName">Client Name:</label>
+            <input type="text" id="clientName" required />
+          </div>
+
+          <div class="form-group">
+            <label for="clientPhone">Client Phone:</label>
+            <input type="tel" id="clientPhone" required />
+          </div>
+
+          <div class="form-group">
+            <label for="hairstyle">Hairstyle:</label>
+            <select id="hairstyle" required>
+              <option value="">Select a hairstyle</option>
+              <option value="add-new" class="add-new-style-option">
+                + Add New Style
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label
+              >Estimated Time: <span id="estimatedTime">--</span> minutes</label
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="appointmentDate">Date:</label>
+            <input type="date" id="appointmentDate" required />
+          </div>
+
+          <div class="form-group">
+            <label>Available Time Slots:</label>
+            <div id="timeSlots" class="time-slots">
+              <!-- Time slots will be generated here -->
+              <p>
+                Please select a hairstyle and date to see available time slots
+              </p>
+            </div>
+          </div>
+
+          <button type="submit">Schedule Appointment</button>
+        </form>
+      </div>
+
+      <div class="schedule-section">
+        <div class="date-navigation">
+          <button id="prevDayBtn">&uarr; Previous Day</button>
+          <div class="date-display" id="appointmentsDateDisplay">
+            Appointments for DD/MM/YYYY
+          </div>
+          <button id="nextDayBtn">&darr; Next Day</button>
+        </div>
+        <table id="appointmentsTable">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Client</th>
+              <th>Phone</th>
+              <th>Hairstyle</th>
+              <th>Duration</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="appointmentsList">
+            <!-- Appointments will be loaded here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <script type="module">
+      // Import Firebase SDK
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+      import {
+        getDatabase,
+        ref,
+        onValue,
+        push,
+        set,
+        get,
+        query,
+        orderByChild,
+        equalTo,
+        remove,
+      } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+
+      // Firebase config
+      const firebaseConfig = {
+        apiKey: "AIzaSyAuiW80MzusIQ9xDxYtLfzcZutDfnCbsIs",
+        authDomain: "saloon-fd2ef.firebaseapp.com",
+        databaseURL: "https://saloon-fd2ef-default-rtdb.firebaseio.com",
+        projectId: "saloon-fd2ef",
+        storageBucket: "saloon-fd2ef.appspot.com",
+        messagingSenderId: "972573728552",
+        appId: "1:972573728552:web:6874b8b8bf159cf8337a1d",
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const database = getDatabase(app);
+      const hairstylesRef = ref(database, "hair-styles");
+      const appointmentsRef = ref(database, "session-schedule");
+
+      // DOM elements
+      const hairstyleSelect = document.getElementById("hairstyle");
+      const estimatedTimeSpan = document.getElementById("estimatedTime");
+      const timeSlotsDiv = document.getElementById("timeSlots");
+      const appointmentDateInput = document.getElementById("appointmentDate");
+      const appointmentsList = document.getElementById("appointmentsList");
+      const appointmentForm = document.getElementById("appointmentForm");
+      const prevDayBtn = document.getElementById("prevDayBtn");
+      const nextDayBtn = document.getElementById("nextDayBtn");
+      const appointmentsDateDisplay = document.getElementById(
+        "appointmentsDateDisplay"
+      );
+      const addHairStyleBtn = document.getElementById("addHairStyleBtn");
+
+      // Global variables
+      let hairstyles = {};
+      let selectedTimeSlot = null;
+      let selectedHairstyleId = null;
+      let currentAppointments = {};
+      let currentDisplayDate = new Date();
+
+      // Format date as DD/MM/YYYY
+      function formatDate(date) {
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+      }
+
+      // Update the displayed date and load appointments
+      function updateDisplayDate(date) {
+        currentDisplayDate = new Date(date);
+        const formattedDate = formatDate(currentDisplayDate);
+        appointmentsDateDisplay.textContent = `Appointments for ${formattedDate}`;
+
+        // Set the date in YYYY-MM-DD format for the appointment loading
+        const yyyy = currentDisplayDate.getFullYear();
+        const mm = String(currentDisplayDate.getMonth() + 1).padStart(2, "0");
+        const dd = String(currentDisplayDate.getDate()).padStart(2, "0");
+        const dateString = `${yyyy}-${mm}-${dd}`;
+
+        loadAppointments(dateString);
+      }
+
+      // Redirect to hairstyle.html
+      function redirectToHairstylePage() {
+        window.location.href = "hairstyle.html";
+      }
+
+      // Initialize the page
+      window.addEventListener("DOMContentLoaded", () => {
+        // Set default date to today
+        const today = new Date();
+        const todayString = today.toISOString().split("T")[0];
+        appointmentDateInput.value = todayString;
+        appointmentDateInput.min = todayString;
+
+        // Initialize display date to today
+        updateDisplayDate(today);
+
+        // Load hairstyles
+        loadHairstyles();
+
+        // Add date change listener for appointment form
+        appointmentDateInput.addEventListener("change", (e) => {
+          loadAppointments(e.target.value);
+          generateTimeSlots();
+        });
+
+        // Previous day button
+        prevDayBtn.addEventListener("click", () => {
+          const newDate = new Date(currentDisplayDate);
+          newDate.setDate(newDate.getDate() - 1);
+          updateDisplayDate(newDate);
+        });
+
+        // Next day button
+        nextDayBtn.addEventListener("click", () => {
+          const newDate = new Date(currentDisplayDate);
+          newDate.setDate(newDate.getDate() + 1);
+          updateDisplayDate(newDate);
+        });
+
+        // Add Hair Style button
+        addHairStyleBtn.addEventListener("click", redirectToHairstylePage);
+
+        // Hairstyle dropdown "Add New Style" option
+        hairstyleSelect.addEventListener("change", (e) => {
+          if (e.target.value === "add-new") {
+            redirectToHairstylePage();
+          }
+        });
+      });
+
+      // Load hairstyles from database
+      function loadHairstyles() {
+        onValue(hairstylesRef, (snapshot) => {
+          hairstyles = snapshot.val() || {};
+
+          // Update main form hairstyle dropdown
+          hairstyleSelect.innerHTML =
+            '<option value="">Select a hairstyle</option>' +
+            '<option value="add-new" class="add-new-style-option">+ Add New Style</option>';
+
+          for (const [id, hairstyle] of Object.entries(hairstyles)) {
+            // Add to main form
+            const option = document.createElement("option");
+            option.value = id;
+            option.textContent = hairstyle.name;
+            hairstyleSelect.appendChild(option);
+          }
+        });
+      }
+
+      // Hairstyle selection handler
+      hairstyleSelect.addEventListener("change", (e) => {
+        selectedHairstyleId = e.target.value;
+        if (selectedHairstyleId && hairstyles[selectedHairstyleId]) {
+          const hairstyle = hairstyles[selectedHairstyleId];
+          estimatedTimeSpan.textContent = hairstyle.time.average;
+          generateTimeSlots();
+        } else {
+          estimatedTimeSpan.textContent = "--";
+          timeSlotsDiv.innerHTML =
+            "<p>Please select a hairstyle and date to see available time slots</p>";
+        }
+      });
+
+      // Generate time slots based on selected date and hairstyle
+      function generateTimeSlots() {
+        timeSlotsDiv.innerHTML = "";
+        selectedTimeSlot = null;
+
+        if (!selectedHairstyleId || !appointmentDateInput.value) {
+          timeSlotsDiv.innerHTML =
+            "<p>Please select a hairstyle and date to see available time slots</p>";
+          return;
+        }
+
+        const hairstyle = hairstyles[selectedHairstyleId];
+        const duration = parseInt(hairstyle.time.average);
+        const date = appointmentDateInput.value;
+
+        // Salon working hours (9am to 6pm)
+        const startHour = 9;
+        const endHour = 18;
+        const slotSize = 15; // minutes
+
+        // Generate all possible time slots
+        for (let hour = startHour; hour < endHour; hour++) {
+          for (let minute = 0; minute < 60; minute += slotSize) {
+            const timeString = `${hour.toString().padStart(2, "0")}:${minute
+              .toString()
+              .padStart(2, "0")}`;
+            const slotElement = document.createElement("div");
+            slotElement.className = "time-slot";
+            slotElement.textContent = timeString;
+            slotElement.dataset.time = timeString;
+
+            // Check if this slot is available
+            checkSlotAvailability(date, timeString, duration).then(
+              (isAvailable) => {
+                if (!isAvailable) {
+                  slotElement.classList.add("booked");
+                  slotElement.title = "This slot is already booked";
+                } else {
+                  slotElement.addEventListener("click", () => {
+                    // Deselect all other slots
+                    document.querySelectorAll(".time-slot").forEach((slot) => {
+                      slot.classList.remove("selected");
+                    });
+                    // Select this slot
+                    slotElement.classList.add("selected");
+                    selectedTimeSlot = timeString;
+                  });
+                }
+                timeSlotsDiv.appendChild(slotElement);
+              }
+            );
+          }
+        }
+      }
+
+      // Check if a time slot is available
+      async function checkSlotAvailability(date, startTime, duration) {
+        const appointmentsQuery = query(
+          ref(database, "session-schedule"),
+          orderByChild("date"),
+          equalTo(date)
+        );
+
+        const snapshot = await get(appointmentsQuery);
+        if (!snapshot.exists()) return true;
+
+        const appointments = snapshot.val();
+        const startDateTime = new Date(`${date}T${startTime}:00`).getTime();
+        const endDateTime = startDateTime + duration * 60 * 1000;
+
+        for (const appointment of Object.values(appointments)) {
+          const apptStart = new Date(
+            `${appointment.date}T${appointment.time}:00`
+          ).getTime();
+          const apptEnd =
+            apptStart + parseInt(appointment.duration) * 60 * 1000;
+
+          // Check for overlap
+          if (
+            (startDateTime >= apptStart && startDateTime < apptEnd) ||
+            (endDateTime > apptStart && endDateTime <= apptEnd) ||
+            (startDateTime <= apptStart && endDateTime >= apptEnd)
+          ) {
+            return false;
+          }
+        }
+
+        return true;
+      }
+
+      // Load appointments for a specific date
+      function loadAppointments(date) {
+        const appointmentsQuery = query(
+          ref(database, "session-schedule"),
+          orderByChild("date"),
+          equalTo(date)
+        );
+
+        onValue(appointmentsQuery, (snapshot) => {
+          appointmentsList.innerHTML = "";
+
+          if (!snapshot.exists()) {
+            appointmentsList.innerHTML =
+              '<tr><td colspan="6">No appointments for this date</td></tr>';
+            return;
+          }
+
+          currentAppointments = snapshot.val();
+          const sortedAppointments = Object.entries(currentAppointments).sort(
+            (a, b) => {
+              return a[1].time.localeCompare(b[1].time);
+            }
+          );
+
+          sortedAppointments.forEach(([appointmentId, appointment]) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${appointment.time}</td>
+              <td>${appointment.clientName}</td>
+              <td>${appointment.clientPhone}</td>
+              <td>${hairstyles[appointment.hairstyleId]?.name || "Unknown"}</td>
+              <td>${appointment.duration} mins</td>
+              <td class="action-buttons">
+                <button class="delete-btn" data-id="${appointmentId}">Delete</button>
+              </td>
+            `;
+            appointmentsList.appendChild(row);
+          });
+
+          // Add event listeners to delete buttons
+          document.querySelectorAll(".delete-btn").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+              const appointmentId = e.target.dataset.id;
+              deleteAppointment(appointmentId);
+            });
+          });
+        });
+      }
+
+      // Delete appointment
+      function deleteAppointment(appointmentId) {
+        if (confirm("Are you sure you want to delete this appointment?")) {
+          remove(ref(database, `session-schedule/${appointmentId}`))
+            .then(() => {
+              alert("Appointment deleted successfully!");
+
+              // Update the appointments list for the currently displayed date
+              const yyyy = currentDisplayDate.getFullYear();
+              const mm = String(currentDisplayDate.getMonth() + 1).padStart(
+                2,
+                "0"
+              );
+              const dd = String(currentDisplayDate.getDate()).padStart(2, "0");
+              const dateString = `${yyyy}-${mm}-${dd}`;
+              loadAppointments(dateString);
+
+              generateTimeSlots();
+            })
+            .catch((error) => {
+              alert("Error deleting appointment: " + error.message);
+            });
+        }
+      }
+
+      // Form submission handler
+      appointmentForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        if (!selectedTimeSlot) {
+          alert("Please select a time slot");
+          return;
+        }
+
+        const clientName = document.getElementById("clientName").value.trim();
+        const clientPhone = document.getElementById("clientPhone").value.trim();
+        const date = appointmentDateInput.value;
+        const hairstyleId = selectedHairstyleId;
+        const duration = hairstyles[hairstyleId].time.average;
+
+        // Check slot availability again (in case it was booked since we last checked)
+        const isAvailable = await checkSlotAvailability(
+          date,
+          selectedTimeSlot,
+          duration
+        );
+        if (!isAvailable) {
+          alert(
+            "This time slot is no longer available. Please select another time."
+          );
+          generateTimeSlots();
+          return;
+        }
+
+        // Create new appointment
+        const newAppointmentRef = push(appointmentsRef);
+        set(newAppointmentRef, {
+          clientName,
+          clientPhone,
+          hairstyleId,
+          date,
+          time: selectedTimeSlot,
+          duration,
+          timestamp: new Date().toISOString(),
+        })
+          .then(() => {
+            alert("Appointment scheduled successfully!");
+            appointmentForm.reset();
+            selectedTimeSlot = null;
+            document.querySelectorAll(".time-slot.selected").forEach((slot) => {
+              slot.classList.remove("selected");
+            });
+
+            // Update the appointments list for the currently displayed date
+            const yyyy = currentDisplayDate.getFullYear();
+            const mm = String(currentDisplayDate.getMonth() + 1).padStart(
+              2,
+              "0"
+            );
+            const dd = String(currentDisplayDate.getDate()).padStart(2, "0");
+            const dateString = `${yyyy}-${mm}-${dd}`;
+            loadAppointments(dateString);
+
+            generateTimeSlots();
+          })
+          .catch((error) => {
+            alert("Error scheduling appointment: " + error.message);
+          });
+      });
+    </script>
+  </body>
+</html>
